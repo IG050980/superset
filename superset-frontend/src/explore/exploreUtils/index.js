@@ -81,7 +81,7 @@ export function getAnnotationJsonUrl(slice_id, form_data, isNative, force) {
 export function getURIDirectory(endpointType = 'base') {
   // Building the directory part of the URI
   if (
-    ['full', 'json', 'csv', 'query', 'results', 'samples'].includes(
+    ['full', 'json', 'csv', 'excel', 'query', 'results', 'samples'].includes(
       endpointType,
     )
   ) {
@@ -173,6 +173,9 @@ export function getExploreUrl({
   if (endpointType === 'csv') {
     search.csv = 'true';
   }
+  if (endpointType === 'excel') {
+    search.excel = 'true';
+  }
   if (endpointType === URL_PARAMS.standalone.name) {
     search.standalone = '1';
   }
@@ -234,7 +237,7 @@ export const buildV1ChartDataPayload = ({
 };
 
 export const getLegacyEndpointType = ({ resultType, resultFormat }) =>
-  resultFormat === 'csv' ? resultFormat : resultType;
+  resultFormat === 'csv' || resultFormat === 'excel' ? resultFormat : resultType;
 
 export const exportChart = ({
   formData,
