@@ -18,10 +18,13 @@ from __future__ import annotations
 
 import json
 import logging
+import pandas as pd
+from datetime import datetime
+from io import BytesIO
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 import simplejson
-from flask import current_app, make_response, request, Response
+from flask import current_app, make_response, request, Response, send_file
 from flask_appbuilder.api import expose, protect
 from flask_babel import gettext as _
 from marshmallow import ValidationError
@@ -46,7 +49,7 @@ from superset.exceptions import QueryObjectValidationError
 from superset.extensions import event_logger
 from superset.utils.async_query_manager import AsyncQueryTokenException
 from superset.utils.core import create_zip, get_user_id, json_int_dttm_ser
-from superset.views.base import CsvResponse, generate_download_headers
+from superset.views.base import CsvResponse, ExcelResponse, generate_download_headers
 from superset.views.base_api import statsd_metrics
 
 if TYPE_CHECKING:
@@ -376,6 +379,21 @@ class ChartDataRestApi(ChartRestApi):
                 create_zip(files),
                 headers=generate_download_headers("zip"),
                 mimetype="application/zip",
+            )
+
+        if result_format == ChartDataResultFormat.EXCEL:
+            # return the first result
+            buf = BytesIO()
+            df = pd.DataFrame.from_dict(result["queries"][0]["data"])
+            include_index = not isinstance(df.index, pd.RangeIndex)
+            df.to_excel(buf, index=include_index)
+            filename = datetime.now().strftime("%Y%m%d_%H%M%S.xlsx")
+            buf.seek(0)
+            return send_file(
+                buf,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                as_attachment=True,
+                attachment_filename=filename,
             )
 
         if result_format == ChartDataResultFormat.JSON:

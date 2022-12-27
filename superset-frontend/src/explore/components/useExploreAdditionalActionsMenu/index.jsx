@@ -39,6 +39,7 @@ const MENU_KEYS = {
   DASHBOARDS_ADDED_TO: 'dashboards_added_to',
   DOWNLOAD_SUBMENU: 'download_submenu',
   EXPORT_TO_CSV: 'export_to_csv',
+  EXPORT_TO_EXCEL: 'export_to_excel',
   EXPORT_TO_CSV_PIVOTED: 'export_to_csv_pivoted',
   EXPORT_TO_JSON: 'export_to_json',
   DOWNLOAD_AS_IMAGE: 'download_as_image',
@@ -136,6 +137,19 @@ export const useExploreAdditionalActionsMenu = (
     [canDownloadCSV, latestQueryFormData],
   );
 
+  const exportExcel = useCallback(
+    () =>
+      canDownloadCSV
+        ? exportChart({
+          formData: latestQueryFormData,
+          ownState,
+          resultType: 'results',
+          resultFormat: 'excel',
+        })
+        : null,
+    [canDownloadCSV, latestQueryFormData],
+  );
+
   const exportCSVPivoted = useCallback(
     () =>
       canDownloadCSV
@@ -179,6 +193,11 @@ export const useExploreAdditionalActionsMenu = (
           break;
         case MENU_KEYS.EXPORT_TO_CSV:
           exportCSV();
+          setIsDropdownVisible(false);
+          setOpenSubmenus([]);
+          break;
+        case MENU_KEYS.EXPORT_TO_EXCEL:
+          exportExcel();
           setIsDropdownVisible(false);
           setOpenSubmenus([]);
           break;
@@ -231,6 +250,7 @@ export const useExploreAdditionalActionsMenu = (
     [
       copyLink,
       exportCSV,
+      exportExcel,
       exportCSVPivoted,
       exportJson,
       latestQueryFormData,
@@ -293,6 +313,13 @@ export const useExploreAdditionalActionsMenu = (
               {t('Export to .CSV')}
             </Menu.Item>
           )}
+          <Menu.Item
+            key={MENU_KEYS.EXPORT_TO_EXCEL}
+            icon={<FileOutlined />}
+            disabled={!canDownloadCSV}
+          >
+            {t('Export to .XLSX')}
+          </Menu.Item>
           <Menu.Item key={MENU_KEYS.EXPORT_TO_JSON} icon={<FileOutlined />}>
             {t('Export to .JSON')}
           </Menu.Item>
