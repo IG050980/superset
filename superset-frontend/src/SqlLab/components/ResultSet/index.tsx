@@ -66,6 +66,7 @@ enum LIMITING_FACTOR {
 export interface ResultSetProps {
   cache?: boolean;
   csv?: boolean;
+  excel?: boolean;
   database?: Record<string, any>;
   displayLimit: number;
   height: number;
@@ -123,6 +124,7 @@ const LimitMessage = styled.span`
 const ResultSet = ({
   cache = false,
   csv = true,
+  excel = true,
   database = {},
   displayLimit,
   height,
@@ -213,7 +215,7 @@ const ResultSet = ({
   };
 
   const renderControls = () => {
-    if (search || visualize || csv) {
+    if (search || visualize || csv || excel) {
       let { data } = query.results;
       if (cache && query.cached) {
         data = cachedData;
@@ -254,7 +256,11 @@ const ResultSet = ({
                 <i className="fa fa-file-text-o" /> {t('Download to CSV')}
               </Button>
             )}
-
+            {excel && (
+              <Button buttonSize="small" href={`/superset/excel/${query.id}`}>
+                <i className="fa fa-file-text-o" /> {t('.XLSX')}
+              </Button>
+            )}
             <CopyToClipboard
               text={prepareCopyToClipboardTabularData(data, columns)}
               wrapped={false}
