@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import json
+import os
 import logging
 import pandas as pd
 from datetime import datetime
@@ -383,14 +384,45 @@ class ChartDataRestApi(ChartRestApi):
 
         if result_format == ChartDataResultFormat.EXCEL:
             # return the first result
-            buf = BytesIO()
+
+            test_file = os.path.expanduser("~/.superset") + '/pandas_simple.xlsx'
+            colums_name = result["queries"][0]["colnames"]
+
+            # Info conditional_formatting
+            #format = {
+            #          'colum': form_data['conditional_formatting'][0]['column'],
+            #          'operator': form_data['conditional_formatting'][0]['operator'],
+            #          'target': form_data['conditional_formatting'][0]['targetValue'],
+            #          'schema': form_data['conditional_formatting'][0]['colorScheme']
+            #          }
+
+            # Info column_config
+            def_value = {colums_name[i]: 'left' for i in range(len(colums_name))}
+            dics = form_data['column_config']
+            for i in range(len(colums_name)):
+                key_name = colums_name[i]
+                value_config = dics[key_name]['horizontalAlign']
+                def_value[key_name] = value_config
+
             df = pd.DataFrame.from_dict(result["queries"][0]["data"])
+
+            writer = pd.ExcelWriter(test_file, engine='xlsxwriter')
             include_index = not isinstance(df.index, pd.RangeIndex)
-            df.to_excel(buf, index=include_index)
+            df.to_excel(writer, sheet_name='Sheet1', index=include_index)
+            workbook  = writer.book
+            worksheet = writer.sheets['Sheet1']
+            for i in range(len(colums_name)):
+                cell_format = workbook.add_format({'align':def_value[colums_name[i]]})
+                worksheet.set_column(i, i, None, cell_format)
+
+            (max_row, max_col) = df.shape
+            #if FormatOperator != 'None':
+                #worksheet.autofilter(0, 0, max_row, max_col - 1)
+            writer.close()
+
             filename = datetime.now().strftime("%Y%m%d_%H%M%S.xlsx")
-            buf.seek(0)
             return send_file(
-                buf,
+                writer,
                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 as_attachment=True,
                 attachment_filename=filename,

@@ -675,7 +675,7 @@ class BaseViz:  # pylint: disable=too-many-public-methods
         data = io.BytesIO()
         df = self.get_df()
         include_index = not isinstance(df.index, pd.RangeIndex)
-        df.to_excel(data, index=include_index)
+        df.to_excel(data, index=include_index, **config["CSV_EXPORT"])
         data.seek(0)
 
         return data  # .read()

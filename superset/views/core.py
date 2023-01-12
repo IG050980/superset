@@ -2545,6 +2545,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         )
         return response
 
+
     @event_logger.log_this
     @expose("/excel/<client_id>")
     def excel(self, client_id: str) -> FlaskResponse:  # pylint: disable=no-self-use
@@ -2577,6 +2578,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
             logger.info("Running a query to turn into Excel")
             sql = query.select_sql or query.executed_sql
             df = query.database.get_df(sql, query.schema)
+        print("Номер клиента=" + client_id)
         buf = io.BytesIO()
         df.to_excel(buf, index=False)
         buf.seek(0)
