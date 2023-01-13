@@ -397,11 +397,11 @@ class ChartDataRestApi(ChartRestApi):
             #          }
 
             # Info column_config
-            def_value = {colums_name[i]: 'left' for i in range(len(colums_name))}
-            dics = form_data['column_config']
+            def_value = {}
+            data_json = form_data['column_config']
             for i in range(len(colums_name)):
                 key_name = colums_name[i]
-                value_config = dics[key_name]['horizontalAlign']
+                value_config = data_json[key_name]['horizontalAlign']
                 def_value[key_name] = value_config
 
             df = pd.DataFrame.from_dict(result["queries"][0]["data"])
