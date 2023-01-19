@@ -385,6 +385,9 @@ class ChartDataRestApi(ChartRestApi):
         if result_format == ChartDataResultFormat.EXCEL:
             # return the first result
 
+
+
+
             test_file = os.path.expanduser("~/.superset") + '/pandas_simple.xlsx'
             colums_name = result["queries"][0]["colnames"]
             dictFormat = {
@@ -401,15 +404,8 @@ class ChartDataRestApi(ChartRestApi):
                 '-,.2f':'#,##0.00;[Red]-#,##0.00',
                 '-$,.2f':'$#,##0.00;[Red]$-#,##0.00'
             }
-            # Info conditional_formatting
-            #format = {
-            #          'colum': form_data['conditional_formatting'][0]['column'],
-            #          'operator': form_data['conditional_formatting'][0]['operator'],
-            #          'target': form_data['conditional_formatting'][0]['targetValue'],
-            #          'schema': form_data['conditional_formatting'][0]['colorScheme']
-            #          }
 
-            # Info column_config
+            # Align, NumberFormat, ColorPositivNegative
             def_value = {}
             data_json = form_data['column_config']
             for i in range(len(colums_name)):
@@ -428,18 +424,40 @@ class ChartDataRestApi(ChartRestApi):
                     f = 'None'
                 def_value[colums_name[i]] = {'horizontalAlign':data_json[colums_name[i]]['horizontalAlign'],
                                              'NumberFormat':f}
+
+
+
+            # Conditional_formatting
+            format = {
+                'colum': colums_name.index(form_data['conditional_formatting'][0]['column']),
+                'schema': form_data['conditional_formatting'][0]['colorScheme'],
+            }
+            try:
+                format['operator'] = form_data['conditional_formatting'][0]['operator']
+                format['target'] = form_data['conditional_formatting'][0]['targetValue']
+            except:
+                format['operator'] = 'None',
+                format['target'] = 'None'
+            
+
+            print('1111111 =:', format)
             df = pd.DataFrame.from_dict(result["queries"][0]["data"])
             writer = pd.ExcelWriter(test_file, engine='xlsxwriter')
             include_index = not isinstance(df.index, pd.RangeIndex)
             df.to_excel(writer, sheet_name='Sheet1', index=include_index)
             workbook  = writer.book
             worksheet = writer.sheets['Sheet1']
+            (max_row, max_col) = df.shape
             for i in range(len(colums_name)):
                 cell_format = workbook.add_format({'align':def_value[colums_name[i]]['horizontalAlign'], 'num_format':def_value[colums_name[i]]['NumberFormat']})
                 worksheet.set_column(i, i, None, cell_format)
-            (max_row, max_col) = df.shape
-            #if FormatOperator != 'None':
-                #worksheet.autofilter(0, 0, max_row, max_col - 1)
+            worksheet.conditional_format(1, format['colum'], max_row, format['colum'], {'type':'2_color_scale',
+                                                            'max_color': format['schema'], 'min_color': '#f1ebd4'
+                                                            })
+            if format['operator'] != 'None':
+                a = 'x ' + format['operator'] + ' ' + str(format['target'])
+                worksheet.autofilter(0, 0, max_row, max_col - 1)
+                worksheet.filter_column(format['colum'], a)
             writer.close()
 
             filename = datetime.now().strftime("%Y%m%d_%H%M%S.xlsx")
